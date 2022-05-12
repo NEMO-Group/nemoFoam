@@ -47,9 +47,6 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
     mixedFvPatchScalarField(p, iF),
     NeutronFluxCoupledBase(patch()),
     FluxnbrName_("undefined-Fluxnbr")
-//    myAlpha(p.size(), Zero),
-//    nbrAlpha(p.size(), Zero)
-
 //    nbrDFieldName_("undefined-DFieldName")
 {
     this->refValue() = 0.0;
@@ -69,9 +66,6 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
     mixedFvPatchScalarField(p, iF),
     NeutronFluxCoupledBase(patch(), dict),
     FluxnbrName_(dict.lookup("FluxName"))
-//    myAlpha("myAlpha", dict, p.size()),
-//    nbrAlpha("nbrAlpha", dict, p.size())
-
 //    nbrDFieldName_(dict.lookup("nbrDiffFieldName"))
 {
     if (!isA<mappedPatchBase>(this->patch().patch()))
@@ -115,9 +109,6 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
     mixedFvPatchScalarField(ptf, p, iF, mapper),
     NeutronFluxCoupledBase(patch(), ptf),
     FluxnbrName_(ptf.FluxnbrName_)
-//    myAlpha(mapper(ptf.myAlpha)),
-//    nbrAlpha(mapper(ptf.nbrAlpha))
-
 //    nbrDFieldName_(ptf.nbrDFieldName_)
 
 {}
@@ -133,8 +124,6 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
     mixedFvPatchScalarField(wtcsf, iF),
     NeutronFluxCoupledBase(patch(), wtcsf),
     FluxnbrName_(wtcsf.FluxnbrName_)
-//    myAlpha(wtcsf.myAlpha),
-//    nbrAlpha(wtcsf.nbrAlpha)
 //    nbrDFieldName_(wtcsf.nbrDFieldName_)
 
 {}
@@ -213,7 +202,7 @@ void NeutronFluxCoupledBaffleMixedFvPatchScalarField::updateCoeffs()
     //    - mixFraction = nbrKDelta / (nbrKDelta + myKDelta())
 
     this->refValue() = nbrIntFld();
-    this->refGrad() = 0;//Alpha/Diff(*this);
+    this->refGrad() = 0.0;
     this->valueFraction() = nbrKDelta()/(nbrKDelta() + myKDelta());
 
     mixedFvPatchScalarField::updateCoeffs();

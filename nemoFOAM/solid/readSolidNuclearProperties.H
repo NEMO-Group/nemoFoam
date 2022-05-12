@@ -217,7 +217,7 @@ Info<< "\n\n*** Opening nuclear properties dict for region: " <<solidRegions[jj]
 
         Nu.set(i_jjInd, new dimensionedScalar("Nu" + i_jjName, dimless, Nu_[i]));
         Ef.set(i_jjInd, new dimensionedScalar("Ef" + name(i + 1), dimEnergy, Ef_[i]));
-        Kerma.set(i_jjInd, new dimensionedScalar("Kerma" + name(i + 1), dimEnergy, Kerma_[i]));
+        Kerma.set(i_jjInd, new dimensionedScalar("Kerma" + name(i + 1), dimEnergy/dimLength, Kerma_[i]));
         invVel.set(i_jjInd, new dimensionedScalar("invVel" + i_jjName, dimTime/dimLength, invVel_[i]));
         chiPrompt.set(i_jjInd, new dimensionedScalar("chiPrompt" + i_jjName, dimless, chiPrompt_[i]));
         chiDelayed.set(i_jjInd, new dimensionedScalar("chiDelayed" + name(i + 1), dimless, chiDelayed_[i]));

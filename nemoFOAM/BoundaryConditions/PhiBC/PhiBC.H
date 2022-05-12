@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2022 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,127 +22,132 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::compressible::
-        turbulentTemperatureCoupledBaffleMixedFvPatchScalarField
+    Foam::PhiBC
 
 Description
-    Mixed boundary condition for temperature, to be used for heat-transfer
-    on back-to-back baffles. Optional thin thermal layer resistances can be
-    specified through thicknessLayers and kappaLayers entries.
+    This boundary condition provides a newAlbedo condition,
+    calculated as:
 
-    Specifies gradient and temperature such that the equations are the same
-    on both sides:
-      - refGradient = zero gradient
-      - refValue = neighbour value
-      - mixFraction = nbrKDelta / (nbrKDelta + myKDelta())
+        \f[
+            Q = Q_{0} + Q_{p} + s*Q_{t}
+        \f]
 
-    where KDelta is heat-transfer coefficient K * deltaCoeffs
-
-    The thermal conductivity \c kappa can either be retrieved from various
-    possible sources, as detailed in the class temperatureCoupledBase.
+    where
+    \vartable
+        s      | single scalar value [units]
+        Q_{0}  | single scalar value [units]
+        Q_{p}  | scalar field across patch [units]
+        Q_{t}  | scalar function of time [units]
+    \endtable
 
 Usage
     \table
-        Property     | Description             | Required    | Default value
-        Tnbr         | name of the field    | no | T
-        thicknessLayers | list of thicknesses per layer [m] | no |
-        kappaLayers  | list of thermal conductivities per layer [W/m/K] | no |
+        Property   | Description                  | Req'd? | Default
+        scalarData | single scalar value          | yes    |
+        data       | single scalar value          | yes    |
+        fieldData  | scalar field across patch    | yes    |
+        timeVsData | scalar function of time      | yes    |
+        wordData   | word, eg name of data object | no     | wordDefault
     \endtable
 
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        type            compressible::turbulentTemperatureCoupledBaffleMixed;
-        Tnbr            T;
-        thicknessLayers (0.1 0.2 0.3 0.4);
-        kappaLayers     (1 2 3 4);
-        value           uniform 300;
+        type       newAlbedo;
+        scalarData -1;
+        data       1;
+        fieldData  uniform 3;
+        timeVsData table (
+                             (0 0)
+                             (1 2)
+                          );
+        wordName   anotherName;
+        value      uniform 4; // optional initial value
     }
     \endverbatim
 
-    Needs to be on underlying mapped(Wall)FvPatch.
-
-See also
-    Foam::temperatureCoupledBase
-
 SourceFiles
-    turbulentTemperatureCoupledBaffleMixedFvPatchScalarField.C
+    PhiBC.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef NeutronFluxCoupledBaffleMixedFvPatchScalarField_H
-#define NeutronFluxCoupledBaffleMixedFvPatchScalarField_H
+#ifndef PhiBC_H
+#define PhiBC_H
 
 #include "mixedFvPatchFields.H"
-#include "NeutronFluxCoupledBase.H"
-#include "scalarField.H"
+//#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-
 /*---------------------------------------------------------------------------*\
-  Class NeutronFluxCoupledBaffleMixedFvPatchScalarField Declaration
+                          Class PhiBC Declaration
 \*---------------------------------------------------------------------------*/
 
-class NeutronFluxCoupledBaffleMixedFvPatchScalarField
+class PhiBC
 :
-    public mixedFvPatchScalarField,
-    public NeutronFluxCoupledBase
+    public mixedFvPatchScalarField
 {
     // Private Data
 
-        //- Name of field on the neighbour region
-        const word FluxnbrName_;
+        //- Field of Types, typically defined across patch faces
+        //  e.g. total pressure p0_.  Other options include vectorField
+        scalarField alpha_;
 
-//        scalarField J_magic;
+        //- Word entry, e.g. pName_ for name of the pressure field on database
+        const word diffCoeffName_;
 
+        scalarField J0_;
 
-
-
+        const word Case_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("NeutronFluxCoupledBaffleMixed");
+    TypeName("PhiBC");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        NeutronFluxCoupledBaffleMixedFvPatchScalarField
+        PhiBC
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        NeutronFluxCoupledBaffleMixedFvPatchScalarField
+        PhiBC
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const dictionary&
         );
 
-        //- Construct by mapping given
-        //  NeutronFluxCoupledBaffleMixedFvPatchScalarField onto a
-        //  new patch
-        NeutronFluxCoupledBaffleMixedFvPatchScalarField
+        //- Construct by mapping given mixedTypeFvPatchField
+        //  onto a new patch
+        PhiBC
         (
-            const NeutronFluxCoupledBaffleMixedFvPatchScalarField&,
+            const PhiBC&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
 
-        //- Construct as copy setting internal field reference
-        NeutronFluxCoupledBaffleMixedFvPatchScalarField
+        //- Disallow copy without setting internal field reference
+        PhiBC
         (
-            const NeutronFluxCoupledBaffleMixedFvPatchScalarField&,
+            const PhiBC&
+        ) = delete;
+
+        //- Copy constructor setting internal field reference
+        PhiBC
+        (
+            const PhiBC&,
             const DimensionedField<scalar, volMesh>&
         );
 
@@ -154,7 +159,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new NeutronFluxCoupledBaffleMixedFvPatchScalarField
+                new PhiBC
                 (
                     *this,
                     iF
@@ -165,8 +170,22 @@ public:
 
     // Member Functions
 
-        //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
+        // Mapping functions
+
+            //- Map (and resize as needed) from self given a mapping object
+            //  Used to update fields following mesh topology change
+            virtual void autoMap(const fvPatchFieldMapper&);
+
+            //- Reverse map the given fvPatchField onto this fvPatchField
+            //  Used to reconstruct fields
+            virtual void rmap(const fvPatchScalarField&, const labelList&);
+
+
+        // Evaluation functions
+
+            //- Update the coefficients associated with the patch field
+            virtual void updateCoeffs();
+
 
         //- Write
         virtual void write(Ostream&) const;
@@ -178,6 +197,7 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 
 #endif
 

@@ -46,10 +46,8 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
 :
     mixedFvPatchScalarField(p, iF),
     NeutronFluxCoupledBase(patch()),
-    FluxnbrName_("undefined-Fluxnbr")
-//    myAlpha(p.size(), Zero),
-//    nbrAlpha(p.size(), Zero)
-
+    FluxnbrName_("undefined-Fluxnbr"),
+    J_magic(p.size(), Zero)
 //    nbrDFieldName_("undefined-DFieldName")
 {
     this->refValue() = 0.0;
@@ -68,10 +66,8 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
 :
     mixedFvPatchScalarField(p, iF),
     NeutronFluxCoupledBase(patch(), dict),
-    FluxnbrName_(dict.lookup("FluxName"))
-//    myAlpha("myAlpha", dict, p.size()),
-//    nbrAlpha("nbrAlpha", dict, p.size())
-
+    FluxnbrName_(dict.lookup("FluxName")),
+    J_magic("MagicCurrent", dict, p.size())
 //    nbrDFieldName_(dict.lookup("nbrDiffFieldName"))
 {
     if (!isA<mappedPatchBase>(this->patch().patch()))
@@ -114,10 +110,8 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
 :
     mixedFvPatchScalarField(ptf, p, iF, mapper),
     NeutronFluxCoupledBase(patch(), ptf),
-    FluxnbrName_(ptf.FluxnbrName_)
-//    myAlpha(mapper(ptf.myAlpha)),
-//    nbrAlpha(mapper(ptf.nbrAlpha))
-
+    FluxnbrName_(ptf.FluxnbrName_),
+    J_magic(mapper(ptf.J_magic))
 //    nbrDFieldName_(ptf.nbrDFieldName_)
 
 {}
@@ -132,9 +126,8 @@ NeutronFluxCoupledBaffleMixedFvPatchScalarField
 :
     mixedFvPatchScalarField(wtcsf, iF),
     NeutronFluxCoupledBase(patch(), wtcsf),
-    FluxnbrName_(wtcsf.FluxnbrName_)
-//    myAlpha(wtcsf.myAlpha),
-//    nbrAlpha(wtcsf.nbrAlpha)
+    FluxnbrName_(wtcsf.FluxnbrName_),
+    J_magic(wtcsf.J_magic)
 //    nbrDFieldName_(wtcsf.nbrDFieldName_)
 
 {}
@@ -213,7 +206,7 @@ void NeutronFluxCoupledBaffleMixedFvPatchScalarField::updateCoeffs()
     //    - mixFraction = nbrKDelta / (nbrKDelta + myKDelta())
 
     this->refValue() = nbrIntFld();
-    this->refGrad() = 0;//Alpha/Diff(*this);
+    this->refGrad() = J_magic/Diff(*this);
     this->valueFraction() = nbrKDelta()/(nbrKDelta() + myKDelta());
 
     mixedFvPatchScalarField::updateCoeffs();

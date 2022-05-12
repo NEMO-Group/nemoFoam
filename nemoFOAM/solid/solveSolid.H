@@ -1,14 +1,21 @@
 {
+
+	#include "updateCrossSections.H"
+	#include "updateFissionRate.H"
+	#include "updateNeutronSource.H"
+	#include "updatePowerSource.H"
+
     while (pimple.correctNonOrthogonal())
     {
-		#include "updateCrossSections.H"
-		#include "updateNeutronSource.H"
-		#include "updateFissionRate.H"
-		#include "updatePowerSource.H"
-				
+			
 		#include "fluxEqns.H"
 		#include "precEqns.H"
 		#include "decEqns.H"
+
+		#include "updateCrossSections.H"
+		#include "updateFissionRate.H"
+		#include "updateNeutronSource.H"
+		#include "updatePowerSource.H"
     }
 }
 

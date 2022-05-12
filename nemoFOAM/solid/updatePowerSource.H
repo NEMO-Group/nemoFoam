@@ -27,7 +27,7 @@ if (Debug)  {Info << "\n - i =  "<< i << ", region is: " << solidRegions[i].name
 		q_PromptFission[posEqn] = Ef[posEqn] * (1-decBetaTot[i]) * Rf[posEqn];
 			if (Debug)  {Info << "\n --- q_PromptFission["<<posEqn<<"] = Ef["<<posEqn<<"] * (1-decBetaTot["<<i<<"]) * Rf["<<posEqn<<"]"<< endl ; }
 
-		q_Kerma[posEqn] = Kerma[posEqn] * (1-decBetaTot[i]) * Ri[posEqn];
+		q_Kerma[posEqn] = Kerma[posEqn] * fluxSolid[posEqn];//(1-decBetaTot[i]) * Ri[posEqn];
   			if (Debug)  {Info << "\n --- q_Kerma["<<posEqn<<"] = kerma["<<posEqn<<"] * (1-decBetaTot["<<i<<"]) * Ri["<<posEqn<<"]" << endl ; }
 
 		qTot[i] += (q_PromptFission[posEqn] + q_Kerma[posEqn]) ;

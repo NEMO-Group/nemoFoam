@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "newAlbedoFvPatchScalarField.H"
+#include "PhiBC.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
@@ -31,7 +31,7 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 /*
-Foam::scalar Foam::newAlbedoFvPatchScalarField::t() const
+Foam::scalar Foam::PhiBC::t() const
 {
     return db().time().timeOutputValue();
 }
@@ -39,16 +39,19 @@ Foam::scalar Foam::newAlbedoFvPatchScalarField::t() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::newAlbedoFvPatchScalarField::
-newAlbedoFvPatchScalarField
+Foam::PhiBC::
+PhiBC
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
     mixedFvPatchScalarField(p, iF),
-    beta_(p.size(), Zero),
-    diffCoeffName_("DiffCoeffName")
+    alpha_(p.size(), Zero),
+    diffCoeffName_("DiffCoeffName"),
+    J0_(p.size(), Zero),
+    Case_("Undefined")
+
 {
     refValue() = 0;
     refGrad() = 0;
@@ -56,8 +59,8 @@ newAlbedoFvPatchScalarField
 }
 
 
-Foam::newAlbedoFvPatchScalarField::
-newAlbedoFvPatchScalarField
+Foam::PhiBC::
+PhiBC
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -65,8 +68,12 @@ newAlbedoFvPatchScalarField
 )
 :
     mixedFvPatchScalarField(p, iF),
-    beta_("beta", dict, p.size()),
-    diffCoeffName_(dict.lookupOrDefault<word>("DiffCoeffName", "wordDefault"))
+    alpha_("alpha", dict, p.size()),
+    diffCoeffName_(dict.lookupOrDefault<word>("DiffCoeffName", "wordDefault")),
+    J0_("Current", dict, p.size()),
+    Case_(dict.lookupOrDefault<word>("Case", "Not defined"))
+
+
 {
     fvPatchScalarField::operator=(scalarField("value", dict, p.size()));
 
@@ -96,47 +103,55 @@ newAlbedoFvPatchScalarField
 }
 
 
-Foam::newAlbedoFvPatchScalarField::
-newAlbedoFvPatchScalarField
+Foam::PhiBC::
+PhiBC
 (
-    const newAlbedoFvPatchScalarField& ptf,
+    const PhiBC& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
     mixedFvPatchScalarField(ptf, p, iF, mapper),
-    beta_(mapper(ptf.beta_)),
-    diffCoeffName_(ptf.diffCoeffName_)
+    alpha_(mapper(ptf.alpha_)),
+    diffCoeffName_(ptf.diffCoeffName_),
+    J0_(mapper(ptf.J0_)),
+    Case_(ptf.Case_)
+
 {}
 
 
-Foam::newAlbedoFvPatchScalarField::
-newAlbedoFvPatchScalarField
+Foam::PhiBC::
+PhiBC
 (
-    const newAlbedoFvPatchScalarField& ptf,
+    const PhiBC& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
     mixedFvPatchScalarField(ptf, iF),
-    beta_(ptf.beta_),
-    diffCoeffName_(ptf.diffCoeffName_)
+    alpha_(ptf.alpha_),
+    diffCoeffName_(ptf.diffCoeffName_),
+    J0_(ptf.J0_),
+    Case_(ptf.Case_)
+
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::newAlbedoFvPatchScalarField::autoMap
+void Foam::PhiBC::autoMap
 (
     const fvPatchFieldMapper& m
 )
 {
     mixedFvPatchScalarField::autoMap(m);
-    m(beta_, beta_);
+    m(alpha_, alpha_);
+    m(J0_, J0_);
+
 }
 
 
-void Foam::newAlbedoFvPatchScalarField::rmap
+void Foam::PhiBC::rmap
 (
     const fvPatchScalarField& ptf,
     const labelList& addr
@@ -144,14 +159,16 @@ void Foam::newAlbedoFvPatchScalarField::rmap
 {
     mixedFvPatchScalarField::rmap(ptf, addr);
 
-    const newAlbedoFvPatchScalarField& tiptf =
-        refCast<const newAlbedoFvPatchScalarField>(ptf);
+    const PhiBC& tiptf =
+        refCast<const PhiBC>(ptf);
 
-    beta_.rmap(tiptf.beta_, addr);
+    alpha_.rmap(tiptf.alpha_, addr);
+    J0_.rmap(tiptf.J0_, addr);
+
 }
 
 
-void Foam::newAlbedoFvPatchScalarField::updateCoeffs()
+void Foam::PhiBC::updateCoeffs()
 {
     if (updated())
     {
@@ -161,19 +178,34 @@ void Foam::newAlbedoFvPatchScalarField::updateCoeffs()
     const fvPatchScalarField& diffCoeffp =
         patch().lookupPatchField<volScalarField, scalar>(diffCoeffName_);
 
-    const scalarField gamma_(0.5*(1 - beta_)/(1 + beta_));
+    const scalarField gamma_ = (0.5*(1 - alpha_)/(1 + alpha_));
 
-    refGrad() = 0;
-    refValue() = 0;
 
-    valueFraction() = (gamma_)/((gamma_) + diffCoeffp*patch().deltaCoeffs());
+    if (Case_ == "IncomingCurrent")
+    {
+      refGrad() = 0;
+      refValue() = 2*J0_;
+      valueFraction() = 1/(1 + 2*diffCoeffp*patch().deltaCoeffs());
+    }
+    else if (Case_ == "OutcomingCurrent") // TO BE VERIFIED!!!
+    {
+      refGrad() = -(1-alpha_)*J0_/diffCoeffp;
+      refValue() = 0;
+      valueFraction() = 0;
+    }
+    else if (Case_ == "Albedo")
+    {
+      refGrad() = 0;
+      refValue() = 0;
+      valueFraction() = gamma_/(gamma_ + diffCoeffp*patch().deltaCoeffs());
+    }
 
     mixedFvPatchScalarField::updateCoeffs();
 }
 
 
 
-void Foam::newAlbedoFvPatchScalarField::write
+void Foam::PhiBC::write
 (
     Ostream& os
 ) const
@@ -181,8 +213,9 @@ void Foam::newAlbedoFvPatchScalarField::write
     fvPatchScalarField::write(os);
 
 
-    writeEntry(os, "beta", beta_);
+    writeEntry(os, "alpha", alpha_);
     writeEntry(os, "diffCoeffName", diffCoeffName_);
+    writeEntry(os, "Current", J0_);
     writeEntry(os, "refValue", refValue());
     writeEntry(os, "refGradient", refGrad());
     writeEntry(os, "valueFraction", valueFraction());
@@ -198,7 +231,7 @@ namespace Foam
     makePatchTypeField
     (
         fvPatchScalarField,
-        newAlbedoFvPatchScalarField
+        PhiBC
     );
 }
 

@@ -37,10 +37,7 @@ Foam::NeutronFluxCoupledBase::NeutronFluxCoupledBase
 :
     patch_(patch),
     myDFieldName_("undefined-myDFieldName"),
-    nbrDFieldName_("undefined-nbrDFieldName"),
-    myAlpha_(patch.size(), Zero),
-    nbrAlpha_(patch.size(), Zero)
-
+    nbrDFieldName_("undefined-nbrDFieldName")
 {}
 
 
@@ -52,9 +49,7 @@ Foam::NeutronFluxCoupledBase::NeutronFluxCoupledBase
 :
     patch_(patch),
     myDFieldName_(dict.lookup("myDiffFieldName")),
-    nbrDFieldName_(dict.lookup("nbrDiffFieldName")),
-    myAlpha_("myAlpha", dict, patch.size()),
-    nbrAlpha_("nbrAlpha", dict, patch.size())
+    nbrDFieldName_(dict.lookup("nbrDiffFieldName"))
 {}
 
 
@@ -67,8 +62,7 @@ Foam::NeutronFluxCoupledBase::NeutronFluxCoupledBase
 :
     patch_(patch),
     myDFieldName_(base.myDFieldName_),
-    myAlpha_(base.myAlpha_),
-    nbrAlpha_(base.nbrAlpha_)
+    nbrDFieldName_(base.nbrDFieldName_)
 {}
 
 
@@ -85,17 +79,17 @@ Foam::tmp<Foam::scalarField> Foam::NeutronFluxCoupledBase::Diff
 
     if (mesh.foundObject<volScalarField>(myDFieldName_))
     {
-        return ((1+myAlpha_)*(patch_.lookupPatchField<volScalarField, scalar>
+        return patch_.lookupPatchField<volScalarField, scalar>
         (
           myDFieldName_
-        )));
+        );
     }
     else if (mesh.foundObject<volScalarField>(nbrDFieldName_))
     {
-        return ((1+nbrAlpha_)*(patch_.lookupPatchField<volScalarField, scalar>
+        return patch_.lookupPatchField<volScalarField, scalar>
         (
           nbrDFieldName_
-        )));
+        );
     }
     else
     {

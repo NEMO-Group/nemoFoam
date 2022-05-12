@@ -98,9 +98,8 @@ class NeutronFluxCoupledBaffleMixedFvPatchScalarField
         //- Name of field on the neighbour region
         const word FluxnbrName_;
 
-//        scalarField J_magic;
-
-
+   //     //- Name of D
+//        const word nbrDFieldName_;
 
 
 

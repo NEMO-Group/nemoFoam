@@ -76,11 +76,6 @@ class NeutronFluxCoupledBase
   //- Name of D
         const word nbrDFieldName_;
 
-        const scalarField myAlpha_;
-
-        const scalarField nbrAlpha_;
-
-
 
 public:
 

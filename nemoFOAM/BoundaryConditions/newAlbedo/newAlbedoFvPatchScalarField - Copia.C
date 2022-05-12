@@ -166,7 +166,7 @@ void Foam::newAlbedoFvPatchScalarField::updateCoeffs()
     refGrad() = 0;
     refValue() = 0;
 
-    valueFraction() = (gamma_)/((gamma_) + diffCoeffp*patch().deltaCoeffs());
+    valueFraction() = gamma_/(gamma_ + diffCoeffp*patch().deltaCoeffs());
 
     mixedFvPatchScalarField::updateCoeffs();
 }
